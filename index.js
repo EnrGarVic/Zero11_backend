@@ -97,6 +97,21 @@ app.post('/login-admin', (req, res) => {
   });
 });
 
+app.post('/productos', (req, res) => {
+  const { nombre, precio, categoria_id } = req.body;
+
+  const sql = 'INSERT INTO productos (nombre, precio, categoria_id) VALUES (?, ?, ?)';
+  const values = [nombre, precio, categoria_id];
+
+  connection.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar producto:', err);
+      res.status(500).json({ success: false, message: 'Error al insertar producto' });
+    } else {
+      res.status(201).json({ success: true, message: 'Producto añadido correctamente', productoId: result.insertId });
+    }
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
