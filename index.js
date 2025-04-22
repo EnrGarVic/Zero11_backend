@@ -4,6 +4,7 @@ const app = express();
 const PORT = 3000;
 const mysql = require('mysql2');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 
 app.use(cors());
 app.use(express.json());
@@ -74,6 +75,28 @@ app.get('/categorias-con-productos', (req, res) => {
     res.json(Array.from(categoriasMap.values()));
   });
 });
+app.post('/login-admin', (req, res) => {
+  const { usuario, password } = req.body;
+
+  const sql = 'SELECT * FROM admin WHERE usuario = ?';
+  connection.query(sql, [usuario], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Error en el servidor' });
+    if (results.length === 0) return res.status(401).json({ error: 'Usuario no encontrado' });
+
+    const admin = results[0];
+
+    bcrypt.compare(password, admin.password, (err, isMatch) => {
+      if (err) return res.status(500).json({ error: 'Error al verificar la contraseña' });
+
+      if (isMatch) {
+        res.json({ success: true, message: 'Login correcto' });
+      } else {
+        res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
+      }
+    });
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
