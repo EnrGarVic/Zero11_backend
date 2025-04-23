@@ -1,4 +1,7 @@
+
 require('dotenv').config();
+
+//importacion de dependencias
 const express = require("express");
 const app = express();
 const PORT = 3000;
@@ -6,9 +9,12 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
+
 app.use(cors());
+
 app.use(express.json());
 
+// Conexión a la base de datos MySQL
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -16,6 +22,7 @@ const connection = mysql.createConnection({
   database: 'zero11'
 });
 
+// Verificamos que la conexión se haya realizado correctamente
 connection.connect(err => {
   if (err) {
     console.error('Error al conectar con la base de datos:', err);
@@ -24,6 +31,7 @@ connection.connect(err => {
   console.log('Conexión a la base de datos MySQL establecida correctamente.');
 });
 
+//ebdpoint para obtener todos los productos
 app.get('/productos', (req, res) => {
   connection.query('SELECT * FROM productos', (err, results) => {
     if (err) {
@@ -34,6 +42,7 @@ app.get('/productos', (req, res) => {
   });
 });
 
+// Endpoint para obtener productos por categoría
 app.get('/categorias-con-productos', (req, res) => {
   const sql = `
     SELECT
@@ -75,6 +84,8 @@ app.get('/categorias-con-productos', (req, res) => {
     res.json(Array.from(categoriasMap.values()));
   });
 });
+
+//endpoint login de admin
 app.post('/login-admin', (req, res) => {
   const { usuario, password } = req.body;
 
@@ -84,7 +95,7 @@ app.post('/login-admin', (req, res) => {
     if (results.length === 0) return res.status(401).json({ error: 'Usuario no encontrado' });
 
     const admin = results[0];
-
+    //libreria para encriptar la contraseña
     bcrypt.compare(password, admin.password, (err, isMatch) => {
       if (err) return res.status(500).json({ error: 'Error al verificar la contraseña' });
 
@@ -97,6 +108,7 @@ app.post('/login-admin', (req, res) => {
   });
 });
 
+// Endpoint para añadir un nuevo producto a la bd
 app.post('/productos', (req, res) => {
   const { nombre, precio, categoria_id } = req.body;
 
@@ -110,6 +122,16 @@ app.post('/productos', (req, res) => {
     } else {
       res.status(201).json({ success: true, message: 'Producto añadido correctamente', productoId: result.insertId });
     }
+  });
+});
+
+//endpoint obtener todas las categorias(para desplegable)
+app.get('/categorias', (req, res) => {
+  connection.query('SELECT * FROM categorias', (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error al obtener categorías' });
+    }
+    res.json(results);
   });
 });
 
