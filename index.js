@@ -135,6 +135,22 @@ app.get('/categorias', (req, res) => {
   });
 });
 
+// endpoint para eliminar producto por ID
+app.delete('/productos/:id', (req, res) => {
+  const id = req.params.id;
+
+  const sql = 'DELETE FROM productos WHERE id = ?';
+
+  connection.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error al eliminar producto:', err);
+      res.status(500).json({ success: false, message: 'Error al eliminar producto' });
+    } else {
+      res.status(200).json({ success: true, message: 'Producto eliminado correctamente' });
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
