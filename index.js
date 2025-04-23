@@ -53,7 +53,7 @@ app.get('/categorias-con-productos', (req, res) => {
       productos.precio
     FROM categorias
     LEFT JOIN productos ON categorias.id = productos.categoria_id
-    ORDER BY categorias.id;
+    ORDER BY categorias.id, productos.id DESC;
   `;
 
   connection.query(sql, (err, results) => {
