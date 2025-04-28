@@ -30,7 +30,7 @@ connection.connect((err) => {
   console.log("Conexión a la base de datos MySQL establecida correctamente.");
 });
 
-//ebdpoint para obtener todos los productos
+//endpoint para obtener todos los productos
 app.get("/productos", (req, res) => {
   connection.query("SELECT * FROM productos", (err, results) => {
     if (err) {
@@ -41,46 +41,39 @@ app.get("/productos", (req, res) => {
   });
 });
 
-// Endpoint para obtener productos por categoría
-app.get("/categorias-con-productos", (req, res) => {
-  const sql = `
-    SELECT
-      categorias.id AS categoria_id,
-      categorias.nombre AS categoria_nombre,
-      productos.id AS producto_id,
-      productos.nombre AS producto_nombre,
-      productos.precio
-    FROM categorias
-    LEFT JOIN productos ON categorias.id = productos.categoria_id
-    ORDER BY categorias.id, productos.id DESC;
-  `;
+// endpoint para obtener productos por categoría
+app.get('/categorias-con-productos', (req, res) => {
+  const sqlCategorias = 'SELECT * FROM categorias';
+  const sqlProductos = 'SELECT * FROM productos';
 
-  connection.query(sql, (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: "Error al obtener los datos" });
+  connection.query(sqlCategorias, (errCategorias, categorias) => {
+    if (errCategorias) {
+      return res.status(500).json({ success: false, message: 'Error al obtener categorias' });
     }
 
-    const categoriasMap = new Map();
-
-    results.forEach((row) => {
-      if (!categoriasMap.has(row.categoria_id)) {
-        categoriasMap.set(row.categoria_id, {
-          id: row.categoria_id,
-          nombre: row.categoria_nombre,
-          productos: [],
-        });
+    connection.query(sqlProductos, (errProductos, productos) => {
+      if (errProductos) {
+        return res.status(500).json({ success: false, message: 'Error al obtener productos' });
       }
 
-      if (row.producto_id) {
-        categoriasMap.get(row.categoria_id).productos.push({
-          id: row.producto_id,
-          nombre: row.producto_nombre,
-          precio: row.precio,
-        });
-      }
+      // Agrupar productos dentro de su categoría
+      const categoriasConProductos = categorias.map((categoria) => {
+        return {
+          id: categoria.id,
+          nombre: categoria.nombre,
+          productos: productos
+            .filter((producto) => producto.categoria_id === categoria.id)
+            .map((producto) => ({
+              id: producto.id,
+              nombre: producto.nombre,
+              precio: producto.precio,
+              categoria_id: producto.categoria_id
+            })),
+        };
+      });
+
+      res.json(categoriasConProductos);
     });
-
-    res.json(Array.from(categoriasMap.values()));
   });
 });
 
@@ -171,6 +164,33 @@ app.delete("/productos/:id", (req, res) => {
         .status(200)
         .json({ success: true, message: "Producto eliminado correctamente" });
     }
+  });
+});
+
+// Editar producto
+app.put("/productos/:id", (req, res) => {
+  const id = req.params.id;
+  const { nombre, precio, categoria_id } = req.body;
+
+  const sql = `
+    UPDATE productos
+    SET nombre = ?, precio = ?, categoria_id = ?
+    WHERE id = ?
+  `;
+
+  const values = [nombre, precio, categoria_id, id];
+
+  connection.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Error al actualizar producto:", err);
+      return res.status(500).json({ success: false, message: "Error al actualizar producto" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Producto no encontrado" });
+    }
+
+    res.status(200).json({ success: true, message: "Producto actualizado correctamente" });
   });
 });
 
