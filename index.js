@@ -194,6 +194,18 @@ app.put("/productos/:id", (req, res) => {
   });
 });
 
+ //endpoint para obtener todos los locales
+ app.get('/locales', (req, res) => {
+  const sql = 'SELECT * FROM locales ORDER BY id';
+  connection.query(sql, (err, resultados) => {
+    if (err) {
+      console.error('Error al obtener locales:', err);
+      return res.status(500).json({ error: 'Error al obtener locales' });
+    }
+    res.json(resultados);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
