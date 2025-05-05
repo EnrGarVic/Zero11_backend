@@ -2,6 +2,9 @@ require("dotenv").config();
 
 //importacion de dependencias
 const express = require("express");
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const app = express();
 const PORT = 3000;
 const mysql = require("mysql2");
@@ -29,6 +32,22 @@ connection.connect((err) => {
   }
   console.log("Conexión a la base de datos MySQL establecida correctamente.");
 });
+
+cloudinary.config({
+  cloud_name: 'dgrbuffr8',
+  api_key: '572925214642911',
+  api_secret: 'oi7jRU7yVlSKmPrjNi-bA55KZnk',
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'eventos', // opcional, crea una carpeta en tu cuenta
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+  },
+});
+
+const upload = multer({ storage: storage });
 
 //endpoint para obtener todos los productos
 app.get("/productos", (req, res) => {
@@ -204,6 +223,13 @@ app.put("/productos/:id", (req, res) => {
     }
     res.json(resultados);
   });
+});
+
+app.post('/upload-imagen-evento', upload.single('imagen'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
+  }
+  res.json({ url: req.file.path });
 });
 
 app.listen(PORT, () => {
