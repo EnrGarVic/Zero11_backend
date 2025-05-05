@@ -42,8 +42,8 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'eventos', // opcional, crea una carpeta en tu cuenta
-    allowed_formats: ['jpg', 'png', 'jpeg'],
+    folder: 'Zero11', 
+    allowed_formats: ['jpg', 'png', 'jpeg', 'avif', 'webp'],
   },
 });
 
@@ -224,12 +224,47 @@ app.put("/productos/:id", (req, res) => {
     res.json(resultados);
   });
 });
-
+//claudinay endpoint para subir imagenes
 app.post('/upload-imagen-evento', upload.single('imagen'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
   }
   res.json({ url: req.file.path });
+});
+
+//endpoint para obtener todos los eventos
+app.post('/eventos', (req, res) => {
+  const { titulo, descripcion, fecha, hora, local_id, imagen, es_proximo } = req.body;
+
+  if (es_proximo) {
+    // Desmarcar el evento anterior marcado como próximo 
+    const desmarcar = 'UPDATE eventos SET es_proximo = false WHERE es_proximo = true';
+    connection.query(desmarcar, (err) => {
+      if (err) {
+        console.error('Error al desmarcar eventos anteriores:', err);
+        return res.status(500).json({ error: 'Error al actualizar eventos anteriores' });
+      }
+      insertarEvento();
+    });
+  } else {
+    insertarEvento();
+  }
+
+  function insertarEvento() {
+    const sql = `
+      INSERT INTO eventos (titulo, descripcion, fecha, hora, local_id, imagen, es_proximo)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const valores = [titulo, descripcion, fecha, hora, local_id, imagen, es_proximo];
+
+    connection.query(sql, valores, (err, result) => {
+      if (err) {
+        console.error('Error al insertar evento:', err);
+        return res.status(500).json({ error: 'Error al guardar el evento' });
+      }
+      res.status(201).json({ success: true, message: 'Evento guardado correctamente' });
+    });
+  }
 });
 
 app.listen(PORT, () => {
