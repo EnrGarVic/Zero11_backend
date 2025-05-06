@@ -266,6 +266,23 @@ app.post('/eventos', (req, res) => {
     });
   }
 });
+// Obtener todos los eventos (ordenados por fecha descendente)
+app.get('/eventos', (req, res) => {
+  const sql = 'SELECT * FROM eventos ORDER BY fecha DESC';
+  connection.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener eventos' });
+    res.json(results);
+  });
+});
+
+// Obtener el próximo evento (solo el que tenga es_proximo = true)
+app.get('/eventos/proximo', (req, res) => {
+  const sql = 'SELECT * FROM eventos WHERE es_proximo = true LIMIT 1';
+  connection.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener el próximo evento' });
+    res.json(results[0]);
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
