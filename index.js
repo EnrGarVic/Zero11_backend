@@ -2,9 +2,9 @@ require("dotenv").config();
 
 //importacion de dependencias
 const express = require("express");
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require("cloudinary").v2;
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const app = express();
 const PORT = 3000;
 const mysql = require("mysql2");
@@ -34,16 +34,16 @@ connection.connect((err) => {
 });
 
 cloudinary.config({
-  cloud_name: 'dgrbuffr8',
-  api_key: '572925214642911',
-  api_secret: 'oi7jRU7yVlSKmPrjNi-bA55KZnk',
+  cloud_name: "dgrbuffr8",
+  api_key: "572925214642911",
+  api_secret: "oi7jRU7yVlSKmPrjNi-bA55KZnk",
 });
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'Zero11', 
-    allowed_formats: ['jpg', 'png', 'jpeg', 'avif', 'webp'],
+    folder: "Zero11",
+    allowed_formats: ["jpg", "png", "jpeg", "avif", "webp"],
   },
 });
 
@@ -61,18 +61,22 @@ app.get("/productos", (req, res) => {
 });
 
 // endpoint para obtener productos por categoría
-app.get('/categorias-con-productos', (req, res) => {
-  const sqlCategorias = 'SELECT * FROM categorias';
-  const sqlProductos = 'SELECT * FROM productos';
+app.get("/categorias-con-productos", (req, res) => {
+  const sqlCategorias = "SELECT * FROM categorias";
+  const sqlProductos = "SELECT * FROM productos";
 
   connection.query(sqlCategorias, (errCategorias, categorias) => {
     if (errCategorias) {
-      return res.status(500).json({ success: false, message: 'Error al obtener categorias' });
+      return res
+        .status(500)
+        .json({ success: false, message: "Error al obtener categorias" });
     }
 
     connection.query(sqlProductos, (errProductos, productos) => {
       if (errProductos) {
-        return res.status(500).json({ success: false, message: 'Error al obtener productos' });
+        return res
+          .status(500)
+          .json({ success: false, message: "Error al obtener productos" });
       }
 
       // Agrupar productos dentro de su categoría
@@ -86,7 +90,7 @@ app.get('/categorias-con-productos', (req, res) => {
               id: producto.id,
               nombre: producto.nombre,
               precio: producto.precio,
-              categoria_id: producto.categoria_id
+              categoria_id: producto.categoria_id,
             })),
         };
       });
@@ -116,9 +120,9 @@ app.post("/login-admin", (req, res) => {
 
       if (isMatch) {
         const token = jwt.sign(
-          { id: admin.id, usuario: admin.usuario }, 
-          process.env.JWT_SECRET, 
-          { expiresIn: "1h" } 
+          { id: admin.id, usuario: admin.usuario },
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
         );
         res.json({ success: true, token: token });
       } else {
@@ -145,13 +149,11 @@ app.post("/productos", (req, res) => {
         .status(500)
         .json({ success: false, message: "Error al insertar producto" });
     } else {
-      res
-        .status(201)
-        .json({
-          success: true,
-          message: "Producto añadido correctamente",
-          productoId: result.insertId,
-        });
+      res.status(201).json({
+        success: true,
+        message: "Producto añadido correctamente",
+        productoId: result.insertId,
+      });
     }
   });
 });
@@ -202,47 +204,57 @@ app.put("/productos/:id", (req, res) => {
   connection.query(sql, values, (err, result) => {
     if (err) {
       console.error("Error al actualizar producto:", err);
-      return res.status(500).json({ success: false, message: "Error al actualizar producto" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Error al actualizar producto" });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Producto no encontrado" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Producto no encontrado" });
     }
 
-    res.status(200).json({ success: true, message: "Producto actualizado correctamente" });
+    res
+      .status(200)
+      .json({ success: true, message: "Producto actualizado correctamente" });
   });
 });
 
- //endpoint para obtener todos los locales
- app.get('/locales', (req, res) => {
-  const sql = 'SELECT * FROM locales ORDER BY id';
+//endpoint para obtener todos los locales
+app.get("/locales", (req, res) => {
+  const sql = "SELECT * FROM locales ORDER BY id";
   connection.query(sql, (err, resultados) => {
     if (err) {
-      console.error('Error al obtener locales:', err);
-      return res.status(500).json({ error: 'Error al obtener locales' });
+      console.error("Error al obtener locales:", err);
+      return res.status(500).json({ error: "Error al obtener locales" });
     }
     res.json(resultados);
   });
 });
 //claudinay endpoint para subir imagenes
-app.post('/upload-imagen-evento', upload.single('imagen'), (req, res) => {
+app.post("/upload-imagen-evento", upload.single("imagen"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No se ha subido ninguna imagen' });
+    return res.status(400).json({ error: "No se ha subido ninguna imagen" });
   }
   res.json({ url: req.file.path });
 });
 
 //endpoint para obtener todos los eventos
-app.post('/eventos', (req, res) => {
-  const { titulo, descripcion, fecha, hora, local_id, imagen, es_proximo } = req.body;
+app.post("/eventos", (req, res) => {
+  const { titulo, descripcion, fecha, hora, local_id, imagen, es_proximo } =
+    req.body;
 
   if (es_proximo) {
-    // Desmarcar el evento anterior marcado como próximo 
-    const desmarcar = 'UPDATE eventos SET es_proximo = false WHERE es_proximo = true';
+    // Desmarcar el evento anterior marcado como próximo
+    const desmarcar =
+      "UPDATE eventos SET es_proximo = false WHERE es_proximo = true";
     connection.query(desmarcar, (err) => {
       if (err) {
-        console.error('Error al desmarcar eventos anteriores:', err);
-        return res.status(500).json({ error: 'Error al actualizar eventos anteriores' });
+        console.error("Error al desmarcar eventos anteriores:", err);
+        return res
+          .status(500)
+          .json({ error: "Error al actualizar eventos anteriores" });
       }
       insertarEvento();
     });
@@ -255,35 +267,71 @@ app.post('/eventos', (req, res) => {
       INSERT INTO eventos (titulo, descripcion, fecha, hora, local_id, imagen, es_proximo)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    const valores = [titulo, descripcion, fecha, hora, local_id, imagen, es_proximo];
+    const valores = [
+      titulo,
+      descripcion,
+      fecha,
+      hora,
+      local_id,
+      imagen,
+      es_proximo,
+    ];
 
     connection.query(sql, valores, (err, result) => {
       if (err) {
-        console.error('Error al insertar evento:', err);
-        return res.status(500).json({ error: 'Error al guardar el evento' });
+        console.error("Error al insertar evento:", err);
+        return res.status(500).json({ error: "Error al guardar el evento" });
       }
-      res.status(201).json({ success: true, message: 'Evento guardado correctamente' });
+      res
+        .status(201)
+        .json({ success: true, message: "Evento guardado correctamente" });
     });
   }
 });
 // Obtener todos los eventos (ordenados por fecha descendente)
-app.get('/eventos', (req, res) => {
-  const sql = 'SELECT * FROM eventos ORDER BY fecha DESC';
+app.get("/eventos", (req, res) => {
+  const sql = "SELECT * FROM eventos ORDER BY fecha DESC";
   connection.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener eventos' });
+    if (err) return res.status(500).json({ error: "Error al obtener eventos" });
     res.json(results);
   });
 });
 
 // Obtener el próximo evento (solo el que tenga es_proximo = true)
-app.get('/eventos/proximo', (req, res) => {
-  const sql = 'SELECT * FROM eventos WHERE es_proximo = true LIMIT 1';
+app.get("/eventos/proximo", (req, res) => {
+  const sql = "SELECT * FROM eventos WHERE es_proximo = true LIMIT 1";
   connection.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Error al obtener el próximo evento' });
+    if (err)
+      return res
+        .status(500)
+        .json({ error: "Error al obtener el próximo evento" });
     res.json(results[0]);
   });
 });
+//eliminar eventos
+app.delete("/eventos/:id", (req, res) => {
+  const id = req.params.id;
+  const sql = "DELETE FROM eventos WHERE id = ?";
 
+  connection.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("Error al eliminar evento:", err);
+      return res
+        .status(500)
+        .json({ success: false, message: "Error al eliminar evento" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Evento no encontrado" });
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: "Evento eliminado correctamente" });
+  });
+});
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
