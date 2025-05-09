@@ -18,10 +18,11 @@ app.use(express.json());
 
 // Conexión a la base de datos MySQL
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: "zero11",
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
 });
 
 // Verificamos que la conexión se haya realizado correctamente
@@ -330,6 +331,61 @@ app.delete("/eventos/:id", (req, res) => {
     res
       .status(200)
       .json({ success: true, message: "Evento eliminado correctamente" });
+  });
+});
+//endpoint para las fotos de la galeria
+app.get("/galeria", (req, res) => {
+  const sql = "SELECT * FROM galeria ORDER BY fecha_subida DESC";
+
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error al obtener galería:", err);
+      return res.status(500).json({ error: "Error al obtener imágenes" });
+    }
+
+    res.json(results);
+  });
+});
+//endpoint para subir imagenes a la galeria
+app.post("/upload-imagen-galeria", upload.single("imagen"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No se ha subido ninguna imagen" });
+  }
+
+  const url = req.file.path;
+
+  const sql = "INSERT INTO galeria (url) VALUES (?)";
+  connection.query(sql, [url], (err, result) => {
+    if (err) {
+      console.error("Error al guardar URL en la galería:", err);
+      return res.status(500).json({ error: "Error al guardar la imagen" });
+    }
+
+    res
+      .status(201)
+      .json({ success: true, message: "Imagen subida correctamente", url });
+  });
+});
+
+// Eliminar una imagen de la galería por ID
+app.delete("/galeria/:id", (req, res) => {
+  const id = req.params.id;
+
+  const sql = "DELETE FROM galeria WHERE id = ?";
+
+  connection.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("Error al eliminar imagen de galería:", err);
+      return res.status(500).json({ error: "Error al eliminar imagen" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Imagen no encontrada" });
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: "Imagen eliminada correctamente" });
   });
 });
 app.listen(PORT, () => {
