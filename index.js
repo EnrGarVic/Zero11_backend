@@ -1,4 +1,7 @@
-require("dotenv").config({ path: ".env.local" });
+const dotenvPath =
+  process.env.NODE_ENV === "production" ? ".env" : ".env.local";
+require("dotenv").config({ path: dotenvPath });
+console.log(` Cargando variables desde: ${dotenvPath}`);
 
 //importacion de dependencias
 const express = require("express");
