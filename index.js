@@ -16,23 +16,18 @@ app.use(cors());
 
 app.use(express.json());
 
-// Conexión a la base de datos MySQL
-const connection = mysql.createConnection({
+// Conexión a la base de datos MySQL usando pool
+const connection = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
-
-// Verificamos que la conexión se haya realizado correctamente
-connection.connect((err) => {
-  if (err) {
-    console.error("Error al conectar con la base de datos:", err);
-    return;
-  }
-  console.log("Conexión a la base de datos MySQL establecida correctamente.");
-});
+console.log("Pool de conexiones MySQL configurado correctamente.");
 
 cloudinary.config({
   cloud_name: "dgrbuffr8",
